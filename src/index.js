@@ -9,7 +9,7 @@ import App from "./App";
 import { ApolloProvider } from "@apollo/react-common";
 import { createHttpLink } from "apollo-link-http";
 import { InMemoryCache } from "apollo-cache-inmemory";
-import { ApolloClient} from "apollo-boost";
+import { ApolloClient } from "apollo-boost";
 import { resolvers, typeDefs } from "./graphql/resolvers";
 
 const httpLink = createHttpLink({
@@ -22,15 +22,16 @@ const client = new ApolloClient({
   link: httpLink,
   cache,
   typeDefs,
-  resolvers
+  resolvers,
 });
 
 client.writeData({
-  data:{
-    cartHidden: true
-  }
-})
- 
+  data: {
+    cartHidden: true,
+    cartItems: [],
+    itemCount: 0,
+  },
+});
 
 ReactDOM.render(
   <ApolloProvider client={client}>

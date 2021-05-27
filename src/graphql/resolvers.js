@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import { addItemToCart,getCartItemCount } from "./cart.utils";
+import { addItemToCart, getCartItemCount, getCartItemsPrice } from "./cart.utils";
 
 export const typeDefs = gql`
   extend type Item {
@@ -27,7 +27,30 @@ const GET_ITEM_COUNT = gql`
   {
     itemCount @client
   }
-`
+`;
+
+const GET_ITEMS_TOTAL_PRICE = gql`
+  {
+    total @client
+  }
+`;
+
+const updateCartItemsRelatedQueries = (cache, newCartItems) => {
+  cache.writeQuery({
+    query: GET_ITEM_COUNT,
+    data: { itemCount: getCartItemCount(newCartItems) }
+  });
+
+  cache.writeQuery({
+    query: GET_ITEMS_TOTAL_PRICE,
+    data: { total: getCartItemsPrice(newCartItems) }
+  });
+
+  cache.writeQuery({
+    query: GET_CART_ITEMS,
+    data: { cartItems: newCartItems }
+  });
+};
 
 export const resolvers = {
   Mutation: {
@@ -49,16 +72,8 @@ export const resolvers = {
 
       const newCartItems = addItemToCart(cartItems, item);
 
-      cache.writeQuery({
-        query: GET_ITEM_COUNT,
-        data: {itemCount: getCartItemCount(newCartItems)}
-      })
+      updateCartItemsRelatedQueries(cache, newCartItems);
 
-      cache.writeQuery({
-        query: GET_CART_ITEMS,
-        data: { cartItems: newCartItems },
-      });
-      
       return newCartItems;
     },
   },

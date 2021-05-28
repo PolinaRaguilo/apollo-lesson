@@ -1,13 +1,31 @@
 import gql from "graphql-tag";
-import { addItemToCart, getCartItemCount, getCartItemsPrice } from "./cart.utils";
+import {
+  addItemToCart,
+  getCartItemCount,
+  getCartItemsPrice,
+} from "./cart.utils";
 
 export const typeDefs = gql`
   extend type Item {
     quantity: Int
   }
+
+  extend type DateTime {
+    nanoseconds: Int!
+    seconds: Int!
+  }
+
+  extend type User {
+    id: ID!
+    displayName: String!
+    email: String!
+    createdAt: DateTime!
+  }
+
   extend type Mutation {
     ToggleCartHidden: Boolean!
     AddItemToCart(item: Item!): [Item]
+    SetCurrentUser(user: User!): User!
   }
 `;
 
@@ -35,20 +53,26 @@ const GET_ITEMS_TOTAL_PRICE = gql`
   }
 `;
 
+const GET_CURRENT_USER = gql`
+  {
+    currentUser @client
+  }
+`;
+
 const updateCartItemsRelatedQueries = (cache, newCartItems) => {
   cache.writeQuery({
     query: GET_ITEM_COUNT,
-    data: { itemCount: getCartItemCount(newCartItems) }
+    data: { itemCount: getCartItemCount(newCartItems) },
   });
 
   cache.writeQuery({
     query: GET_ITEMS_TOTAL_PRICE,
-    data: { total: getCartItemsPrice(newCartItems) }
+    data: { total: getCartItemsPrice(newCartItems) },
   });
 
   cache.writeQuery({
     query: GET_CART_ITEMS,
-    data: { cartItems: newCartItems }
+    data: { cartItems: newCartItems },
   });
 };
 
@@ -75,6 +99,13 @@ export const resolvers = {
       updateCartItemsRelatedQueries(cache, newCartItems);
 
       return newCartItems;
+    },
+    setCurrentUser: (_root, { user }, { cache }) => {
+      cache.writeQuery({
+        query: GET_CURRENT_USER,
+        data: { currentUser: user },
+      });
+      return user;
     },
   },
 };
